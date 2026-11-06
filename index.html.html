@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>مصاريف الفيزا</title>
+<meta name="apple-mobile-web-app-title" content="مصاريف الفيزا">
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#77756e;--ac:#b08d2e;--bd:#e6e3da;--red:#c0392b;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161614;--card:#22221f;--tx:#f2f0ea;--mut:#9a978d;--ac:#d4af4a;--bd:#34332e;--red:#e67e6f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161614;--card:#22221f;--tx:#f2f0ea;--mut:#9a978d;--ac:#d4af4a;--bd:#34332e;--red:#e67e6f;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 14px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:12px}
+.big{font-size:36px;font-weight:700}
+.mut{color:var(--mut);font-size:13px}
+.row{display:flex;gap:10px}.row>div{flex:1}
+.stat b{display:block;font-size:19px;margin-top:2px}
+input,button,select{font:inherit;color:inherit}
+input,select{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-top:8px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{flex:1 1 30%;background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:12px 4px;font-size:15px;text-align:center}
+.chip:active{background:var(--ac);color:#fff}
+.btn{background:var(--ac);color:#fff;border:0;border-radius:12px;padding:13px;width:100%;font-weight:600;margin-top:10px;font-size:16px}
+.btn.ghost{background:transparent;color:var(--mut);border:1px solid var(--bd);font-weight:400}
+.btn.red{background:transparent;color:var(--red);border:1px solid var(--red)}
+.cat{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px}
+.cat span:first-child{width:56px}
+.cat .b{flex:1;height:8px;background:var(--bd);border-radius:6px;overflow:hidden}
+.cat .b i{display:block;height:100%;background:var(--ac)}
+.cat .v{width:70px;text-align:left;direction:ltr}
+.item{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--bd);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:right}
+.item.first{border-top:0}
+.n{flex:1;min-width:0}
+.tag{font-size:12px;color:var(--ac)}
+.amt{font-weight:600;direction:ltr}
+.day{font-size:12px;color:var(--mut);margin:12px 0 0}
+.empty{text-align:center;color:var(--mut);padding:20px 0}
+dialog{border:1px solid var(--bd);border-radius:16px;background:var(--card);color:var(--tx);width:min(92vw,420px);padding:16px}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.ar{border-top:1px solid var(--bd);padding:10px 0}.ar:first-child{border-top:0}.ar summary{cursor:pointer;font-weight:600}
+.arow{display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;color:var(--mut)}.arow b{color:var(--tx);direction:ltr}
+.ar .btn{margin-top:8px;padding:10px;font-size:14px}
+</style>
+</head>
+<body>
+<h1>💳 مصاريف الفيزا</h1>
+
+<div class="card">
+  <div class="mut">إجمالي المصروفات</div>
+  <div class="big" id="total">0</div>
+  <div class="row" style="margin-top:12px">
+    <div class="stat"><span class="mut">اليوم</span><b id="today">0</b></div>
+    <div class="stat"><span class="mut">هذا الشهر</span><b id="month">0</b></div>
+    <div class="stat"><span class="mut">العمليات</span><b id="count">0</b></div>
+  </div>
+  <div id="cats" style="margin-top:10px"></div>
+  <button class="btn" id="pay" style="margin-top:14px">✅ تم السداد — ابدأ من جديد</button>
+</div>
+
+<div class="card">
+  <div class="mut">اكتب المبلغ ثم اضغط على النوع لتسجيله</div>
+  <input id="amount" type="number" inputmode="decimal" placeholder="المبلغ (مثال: 12.50)">
+  <div class="chips" id="chips"></div>
+</div>
+
+<div class="card">
+  <div class="mut">السجل (اضغط على أي عملية للتعديل أو الحذف)</div>
+  <div id="list"><div class="empty">جاري التحميل…</div></div>
+</div>
+
+<div class="card">
+  <div class="mut" style="margin-bottom:4px">📦 الأرشيف (المدفوع)</div>
+  <div id="arch"></div>
+</div>
+
+<dialog id="cdlg">
+  <div id="cmsg" style="font-size:16px;line-height:1.6"></div>
+  <button class="btn" id="cok">تأكيد</button>
+  <button class="btn ghost" id="cno">إلغاء</button>
+</dialog>
+
+<dialog id="dlg">
+  <div class="mut">تعديل العملية</div>
+  <input id="eAmt" type="number" inputmode="decimal" placeholder="المبلغ">
+  <select id="eCat"></select>
+  <input id="eNote" type="text" placeholder="ملاحظة (اختياري)">
+  <input id="eDate" type="datetime-local">
+  <button class="btn" id="eSave">حفظ</button>
+  <button class="btn red" id="eDel">حذف</button>
+  <button class="btn ghost" id="eClose">إغلاق</button>
+</dialog>
+
+<script>
+(function(){
+  var CATS=['كوفي','بترول','أكل','فواتير','أخرى'];
+  var tx=[],db=null,col=null,mode='local',LS='visa_tracker_v2',AR='visa_archive_v1',arch=[],editing=null;
+  var $=function(i){return document.getElementById(i)};
+  function fmt(n){return (Math.round(n*100)/100).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}
+  function lsRead(){try{tx=JSON.parse(localStorage.getItem(LS)||'[]')}catch(e){tx=[]}}
+  function lsWrite(){try{localStorage.setItem(LS,JSON.stringify(tx))}catch(e){}}
+  function dk(t){var d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+  function dayLabel(t){var n=Date.now();if(dk(t)===dk(n))return 'اليوم';if(dk(t)===dk(n-864e5))return 'أمس';
+    return new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'})}
+  function localInput(t){var d=new Date(t-new Date(t).getTimezoneOffset()*6e4);return d.toISOString().slice(0,16)}
+
+  CATS.forEach(function(c){
+    var b=document.createElement('button');b.className='chip';b.textContent=c;
+    b.onclick=function(){var a=parseFloat($('amount').value);if(!(a>0)){$('amount').focus();return}
+      save({id:'t'+Date.now()+Math.floor(Math.random()*999),a:a,c:c,n:'',t:Date.now()});$('amount').value=''};
+    $('chips').appendChild(b);
+    var o=document.createElement('option');o.value=c;o.textContent=c;$('eCat').appendChild(o)});
+
+  function save(t){
+    if(mode==='db'){col.doc(t.id).set(t).catch(function(){})}
+    else{var i=tx.findIndex(function(x){return x.id===t.id});if(i<0)tx.push(t);else tx[i]=t;lsWrite();render()}}
+  function del(id){
+    if(mode==='db'){col.doc(id).delete().catch(function(){})}
+    else{tx=tx.filter(function(x){return x.id!==id});lsWrite();render()}}
+
+  function render(){
+    var now=new Date(),tk=dk(now.getTime()),tot=0,td=0,mo=0,by={};
+    CATS.forEach(function(c){by[c]=0});
+    tx.forEach(function(t){var d=new Date(t.t),c=CATS.indexOf(t.c)<0?'أخرى':t.c;tot+=t.a;by[c]+=t.a;
+      if(d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear())mo+=t.a;if(dk(t.t)===tk)td+=t.a});
+    $('total').textContent=fmt(tot);$('today').textContent=fmt(td);$('month').textContent=fmt(mo);$('count').textContent=tx.length;
+    var cb=$('cats');cb.textContent='';
+    CATS.forEach(function(c){if(!by[c])return;
+      var r=document.createElement('div');r.className='cat';
+      var a=document.createElement('span');a.textContent=c;
+      var b=document.createElement('span');b.className='b';var i=document.createElement('i');i.style.width=(by[c]/tot*100)+'%';b.appendChild(i);
+      var v=document.createElement('span');v.className='v';v.textContent=fmt(by[c]);
+      r.appendChild(a);r.appendChild(b);r.appendChild(v);cb.appendChild(r)});
+    var s=tx.slice().sort(function(a,b){return b.t-a.t}),box=$('list');box.textContent='';
+    if(!s.length){var e=document.createElement('div');e.className='empty';e.textContent='لا توجد مصاريف بعد';box.appendChild(e);return}
+    var last='',first=true;
+    s.forEach(function(t){
+      var k=dk(t.t);
+      if(k!==last){last=k;var h=document.createElement('div');h.className='day';h.textContent=dayLabel(t.t);box.appendChild(h);first=true}
+      var r=document.createElement('button');r.className='item'+(first?' first':'');first=false;
+      var n=document.createElement('div');n.className='n';
+      var a=document.createElement('div');a.textContent=t.n||t.c||'أخرى';
+      var g=document.createElement('div');g.className='tag';g.textContent=(t.c||'أخرى')+' • '+new Date(t.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      n.appendChild(a);n.appendChild(g);
+      var am=document.createElement('div');am.className='amt';am.textContent=fmt(t.a);
+      r.appendChild(n);r.appendChild(am);
+      r.onclick=function(){editing=t;$('eAmt').value=t.a;$('eCat').value=CATS.indexOf(t.c)<0?'أخرى':t.c;$('eNote').value=t.n||'';$('eDate').value=localInput(t.t);$('dlg').showModal()};
+      box.appendChild(r)});
+  }
+  $('eSave').onclick=function(){var a=parseFloat($('eAmt').value);if(!(a>0)||!editing)return;
+    var t=new Date($('eDate').value).getTime();if(isNaN(t))t=editing.t;
+    save({id:editing.id,a:a,c:$('eCat').value,n:$('eNote').value.trim(),t:t});$('dlg').close()};
+  $('eDel').onclick=function(){if(!editing)return;var id=editing.id;$('dlg').close();ask('حذف هذه العملية؟',function(){del(id)})};
+  $('eClose').onclick=function(){$('dlg').close()};
+
+  function ask(msg,ok,single){
+    $('cmsg').textContent=msg;$('cno').style.display=single?'none':'';$('cok').textContent=single?'حسناً':'تأكيد';
+    $('cok').onclick=function(){$('cdlg').close();if(ok)ok()};
+    $('cno').onclick=function(){$('cdlg').close()};
+    $('cdlg').showModal();
+  }
+  function arWrite(){try{localStorage.setItem(AR,JSON.stringify(arch))}catch(e){}}
+  function arRead(){try{arch=JSON.parse(localStorage.getItem(AR)||'[]')}catch(e){arch=[]}renderArchive()}
+  function fullDate(t){return new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long',year:'numeric'})}
+  function payAll(){
+    if(tx.length)ask('تأكيد السداد؟ ستنتقل كل المصاريف الحالية إلى الأرشيف ويبدأ حساب جديد.',doPay);
+    else ask('لا توجد مصاريف لسدادها',null,true);
+  }
+  function doPay(){
+    if(!tx.length)return;
+    
+    var tot=0;tx.forEach(function(t){tot+=t.a});
+    arch.unshift({id:'a'+Date.now(),p:Date.now(),total:tot,items:tx.slice()});
+    arWrite();tx=[];lsWrite();render();renderArchive();
+  }
+  $('pay').onclick=payAll;
+  function renderArchive(){
+    var box=$('arch');box.textContent='';
+    if(!arch.length){var e=document.createElement('div');e.className='empty';e.textContent='لا توجد عمليات سداد مؤرشفة بعد';box.appendChild(e);return}
+    arch.forEach(function(en){
+      var d=document.createElement('details');d.className='ar';
+      var s=document.createElement('summary');s.textContent='سداد '+fullDate(en.p)+' — '+fmt(en.total)+' ('+en.items.length+' عملية)';
+      d.appendChild(s);
+      en.items.slice().sort(function(a,b){return b.t-a.t}).forEach(function(t){
+        var r=document.createElement('div');r.className='arow';
+        var a=document.createElement('span');a.textContent=(t.n||t.c||'أخرى')+' • '+fullDate(t.t);
+        var b=document.createElement('b');b.textContent=fmt(t.a);
+        r.appendChild(a);r.appendChild(b);d.appendChild(r)});
+      var rb=document.createElement('button');rb.className='btn ghost';rb.textContent='إرجاع إلى المصاريف الحالية';
+      rb.onclick=function(){ask('إرجاع هذه العمليات إلى المصاريف الحالية؟',function(){
+        tx=tx.concat(en.items);arch=arch.filter(function(x){return x.id!==en.id});arWrite();lsWrite();render();renderArchive()})};
+      var db2=document.createElement('button');db2.className='btn red';db2.textContent='حذف من الأرشيف نهائياً';
+      db2.onclick=function(){ask('حذف هذا السداد من الأرشيف نهائياً؟',function(){
+        arch=arch.filter(function(x){return x.id!==en.id});arWrite();renderArchive()})};
+      d.appendChild(rb);d.appendChild(db2);box.appendChild(d)});
+  }
+  function startLocal(){
+    mode='local';
+    var raw=null;try{raw=localStorage.getItem(LS)}catch(e){}
+    if(raw===null){
+      var now=Date.now();
+      [100,12.5,18,50,15,55,53,95.2,189].forEach(function(v,i){tx.push({id:'s'+i,a:v,c:'أخرى',n:'',t:now-(9-i)*60000})});
+      lsWrite();
+    } else lsRead();
+    arRead();
+    render();
+  }
+  startLocal();
+})();
+</script>
+</body>
+</html>
